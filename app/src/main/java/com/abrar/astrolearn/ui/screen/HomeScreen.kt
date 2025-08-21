@@ -513,7 +513,7 @@ private fun ImageBackedTopicCard(
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize(),
                     onLoading = { isLoading = true; hasError = false }, // Reset hasError on new load
-                    onError = { hasError = true; isLoading = false } 
+                    onError = { hasError = true; isLoading = false }
                 )
             }
 
