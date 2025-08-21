@@ -14,7 +14,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.core.view.WindowCompat
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -29,9 +28,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Enable edge-to-edge display and prevent system from adjusting content
+        // Enable edge-to-edge display
         enableEdgeToEdge()
-        WindowCompat.setDecorFitsSystemWindows(window, false)
 
         setContent {
             AstroLearnTheme {
@@ -53,6 +51,7 @@ fun AstroLearnApp() {
     Scaffold(
         modifier = Modifier
             .fillMaxSize()
+            // Apply safe drawing insets as padding to the Scaffold content area
             .windowInsetsPadding(WindowInsets.safeDrawing)
     ) { innerPadding ->
         AstroLearnNavHost(

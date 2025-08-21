@@ -1,12 +1,19 @@
 package com.abrar.astrolearn.ui.screen
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.*
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
@@ -17,11 +24,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
@@ -43,8 +52,9 @@ fun HomeScreen(
 ) {
     val topics by viewModel.topics.collectAsState()
     var searchText by remember { mutableStateOf("") }
+    var isSearchFocused by remember { mutableStateOf(false) }
+    val focusManager = LocalFocusManager.current
 
-    // Filter topics based on search
     val filteredTopics = remember(topics, searchText) {
         if (searchText.isBlank()) {
             topics
@@ -58,9 +68,8 @@ fun HomeScreen(
     val cosmicPurple = Color(0xFF6A4C93)
     val starGold = Color(0xFFFFD700)
     val nebulaPink = Color(0xFFFF6B9D)
-    val spaceBlue = Color(0xFF1E3A8A)
+    val spaceBlue = Color(0xFF1E3A8A) // Used for SearchBar background
     val softGold = Color(0xFFFFF3E0)
-    val mutedText = Color(0xFF757575)
 
     // Dynamic greeting based on time
     val greeting = remember {
@@ -85,13 +94,15 @@ fun HomeScreen(
         label = "floatingOffset"
     )
 
+    val headerVisible by remember(isSearchFocused, searchText) {
+        derivedStateOf {
+            !isSearchFocused && searchText.isBlank()
+        }
+    }
+
     Scaffold(
-        modifier = Modifier
-            .fillMaxSize()
-            .imePadding(), // This ensures the entire scaffold adjusts for the keyboard
-        containerColor = MaterialTheme.colorScheme.background,
+        contentWindowInsets = WindowInsets.safeDrawing,
         floatingActionButton = {
-            // Minimal Floating Favorites Button
             FloatingActionButton(
                 onClick = onFavoritesClick,
                 containerColor = softGold,
@@ -106,31 +117,54 @@ fun HomeScreen(
             }
         }
     ) { paddingValues ->
-        LazyColumn(
+        val clearFocusModifier = Modifier
+            .clickable(
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() }
+            ) { focusManager.clearFocus() }
+
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
-            contentPadding = PaddingValues(bottom = 100.dp) // Extra padding for FAB
+                .padding(paddingValues) // Use paddingValues from Scaffold FIRST
+                .imePadding() // THEN Moves content above IME
+                .then(clearFocusModifier)
         ) {
-            item {
-                // Cosmic Header Section
+            SearchBar(
+                searchText = searchText,
+                onSearchTextChange = { searchText = it },
+                onSearchDone = { focusManager.clearFocus() },
+                starGold = starGold,
+                backgroundColor = spaceBlue, // Pass the desired background color
+                onFocusChanged = { isSearchFocused = it }
+            )
+
+            AnimatedVisibility(
+                visible = headerVisible,
+                enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(),
+                exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut()
+            ) {
                 CosmicHeaderSection(
                     greeting = greeting,
-                    searchText = searchText,
-                    onSearchTextChange = { searchText = it },
                     floatingOffset = floatingOffset,
                     deepIndigo = deepIndigo,
                     cosmicPurple = cosmicPurple,
                     starGold = starGold,
                     nebulaPink = nebulaPink,
                     spaceBlue = spaceBlue,
-                    mutedText = mutedText
                 )
             }
 
-            items(filteredTopics) { topic ->
-                Box(modifier = Modifier.padding(horizontal = 16.dp)) {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f), // Takes remaining space and enables scrolling
+                verticalArrangement = Arrangement.spacedBy(20.dp),
+                contentPadding = PaddingValues(
+                    start = 16.dp, end = 16.dp, top = 12.dp, bottom = 20.dp
+                )
+            ) {
+                items(filteredTopics) { topic ->
                     ImageBackedTopicCard(
                         topic = topic,
                         onClick = { onTopicClick(topic) }
@@ -142,174 +176,14 @@ fun HomeScreen(
 }
 
 @Composable
-private fun CosmicHeaderSection(
-    greeting: String,
+private fun SearchBar(
     searchText: String,
     onSearchTextChange: (String) -> Unit,
-    floatingOffset: Float,
-    deepIndigo: Color,
-    cosmicPurple: Color,
+    onSearchDone: () -> Unit,
     starGold: Color,
-    nebulaPink: Color,
-    spaceBlue: Color,
-    mutedText: Color
+    backgroundColor: Color,
+    onFocusChanged: (Boolean) -> Unit
 ) {
-    // Glassmorphic background with cosmic gradient
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        spaceBlue.copy(alpha = 0.9f),
-                        cosmicPurple.copy(alpha = 0.7f),
-                        deepIndigo.copy(alpha = 0.5f),
-                        Color.Transparent
-                    ),
-                    startY = 0f,
-                    endY = 800f
-                )
-            )
-            .padding(top = 40.dp, bottom = 32.dp)
-    ) {
-        // Floating stars background pattern
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 20.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            Text("✨", fontSize = 16.sp, color = starGold.copy(alpha = 0.6f))
-            Text("⭐", fontSize = 12.sp, color = starGold.copy(alpha = 0.4f))
-            Text("🌟", fontSize = 14.sp, color = starGold.copy(alpha = 0.5f))
-            Text("✨", fontSize = 10.sp, color = starGold.copy(alpha = 0.3f))
-            Text("⭐", fontSize = 16.sp, color = starGold.copy(alpha = 0.6f))
-        }
-
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // App Title with Floating Icon
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                // Floating telescope icon
-                Text(
-                    text = "🔭",
-                    fontSize = 32.sp,
-                    modifier = Modifier
-                        .offset(y = (-floatingOffset).dp)
-                        .padding(end = 12.dp)
-                        .shadow(
-                            elevation = 4.dp,
-                            shape = RoundedCornerShape(50),
-                            ambientColor = starGold,
-                            spotColor = starGold
-                        )
-                )
-
-                // App title with glow effect
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "AstroLearn",
-                        style = MaterialTheme.typography.headlineLarge.copy(
-                            fontWeight = FontWeight.ExtraBold,
-                            color = Color.White,
-                            letterSpacing = 1.2.sp,
-                            fontSize = 32.sp
-                        ),
-                        modifier = Modifier.shadow(
-                            elevation = 8.dp,
-                            shape = RoundedCornerShape(8.dp),
-                            ambientColor = starGold.copy(alpha = 0.5f),
-                            spotColor = starGold.copy(alpha = 0.5f)
-                        )
-                    )
-
-                    // Floating planet accent
-                    Text(
-                        text = "🪐",
-                        fontSize = 20.sp,
-                        modifier = Modifier
-                            .offset(x = 40.dp, y = (-8).dp)
-                            .offset(y = floatingOffset.dp)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Dynamic Greeting with Pill Background
-            Box(
-                modifier = Modifier
-                    .background(
-                        Brush.horizontalGradient(
-                            colors = listOf(
-                                nebulaPink.copy(alpha = 0.3f),
-                                starGold.copy(alpha = 0.2f),
-                                cosmicPurple.copy(alpha = 0.3f)
-                            )
-                        ),
-                        shape = RoundedCornerShape(50)
-                    )
-                    .padding(horizontal = 20.dp, vertical = 12.dp)
-            ) {
-                Text(
-                    text = "$greeting, Explorer! 🌌",
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        letterSpacing = 0.8.sp
-                    ),
-                    textAlign = TextAlign.Center
-                )
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Subtitle
-            Text(
-                text = "Discover the infinite wonders of the cosmos",
-                style = MaterialTheme.typography.bodyLarge.copy(
-                    color = Color.White.copy(alpha = 0.8f),
-                    fontWeight = FontWeight.Light,
-                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
-                ),
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Cosmic Search Bar
-            CosmicSearchBar(
-                searchText = searchText,
-                onSearchTextChange = onSearchTextChange,
-                mutedText = mutedText,
-                spaceBlue = spaceBlue,
-                starGold = starGold
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-    }
-}
-
-@Composable
-private fun CosmicSearchBar(
-    searchText: String,
-    onSearchTextChange: (String) -> Unit,
-    mutedText: Color,
-    spaceBlue: Color,
-    starGold: Color
-) {
-    // Glassmorphic search bar
     OutlinedTextField(
         value = searchText,
         onValueChange = onSearchTextChange,
@@ -332,12 +206,14 @@ private fun CosmicSearchBar(
         },
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp)
-            .shadow(
-                elevation = 8.dp,
+            .background(backgroundColor) // Apply distinct background
+            .padding(horizontal = 16.dp, vertical = 12.dp) // Padding for the search bar area
+            .shadow( // Optional: keep shadow if desired, adjust as needed
+                elevation = 4.dp, // Reduced elevation for a top bar feel
                 shape = RoundedCornerShape(50),
-                ambientColor = Color.Black.copy(alpha = 0.2f)
-            ),
+                ambientColor = Color.Black.copy(alpha = 0.1f)
+            )
+            .onFocusChanged { focusState -> onFocusChanged(focusState.isFocused) },
         shape = RoundedCornerShape(50),
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = starGold.copy(alpha = 0.8f),
@@ -348,14 +224,154 @@ private fun CosmicSearchBar(
             unfocusedTextColor = Color.White,
             cursorColor = starGold
         ),
-        keyboardOptions = KeyboardOptions.Default.copy(
-            imeAction = ImeAction.Search
-        ),
         singleLine = true,
+        keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
+        keyboardActions = KeyboardActions(
+            onSearch = { onSearchDone() }
+        ),
         textStyle = MaterialTheme.typography.bodyLarge.copy(
             fontWeight = FontWeight.Medium
         )
     )
+}
+
+@Composable
+private fun CosmicHeaderSection(
+    greeting: String,
+    floatingOffset: Float,
+    deepIndigo: Color,
+    cosmicPurple: Color,
+    starGold: Color,
+    nebulaPink: Color,
+    spaceBlue: Color,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            spaceBlue.copy(alpha = 0.9f),
+                            cosmicPurple.copy(alpha = 0.7f),
+                            deepIndigo.copy(alpha = 0.5f),
+                            Color.Transparent
+                        ),
+                        startY = 0f,
+                        endY = 800f
+                    )
+                )
+                .padding(top = 20.dp, bottom = 32.dp) // Adjusted top padding as search bar is separate
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 20.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                Text("✨", fontSize = 16.sp, color = starGold.copy(alpha = 0.6f))
+                Text("⭐", fontSize = 12.sp, color = starGold.copy(alpha = 0.4f))
+                Text("🌟", fontSize = 14.sp, color = starGold.copy(alpha = 0.5f))
+                Text("✨", fontSize = 10.sp, color = starGold.copy(alpha = 0.3f))
+                Text("⭐", fontSize = 16.sp, color = starGold.copy(alpha = 0.6f))
+            }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Spacer(modifier = Modifier.height(32.dp))
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "🔭",
+                        fontSize = 32.sp,
+                        modifier = Modifier
+                            .offset(y = (-floatingOffset).dp)
+                            .padding(end = 12.dp)
+                            .shadow(
+                                elevation = 4.dp,
+                                shape = RoundedCornerShape(50),
+                                ambientColor = starGold,
+                                spotColor = starGold
+                            )
+                    )
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "AstroLearn",
+                            style = MaterialTheme.typography.headlineLarge.copy(
+                                fontWeight = FontWeight.ExtraBold,
+                                color = Color.White,
+                                letterSpacing = 1.2.sp,
+                                fontSize = 32.sp
+                            ),
+                            modifier = Modifier.shadow(
+                                elevation = 8.dp,
+                                shape = RoundedCornerShape(8.dp),
+                                ambientColor = starGold.copy(alpha = 0.5f),
+                                spotColor = starGold.copy(alpha = 0.5f)
+                            )
+                        )
+                        Text(
+                            text = "🪐",
+                            fontSize = 20.sp,
+                            modifier = Modifier
+                                .offset(x = 40.dp, y = (-8).dp)
+                                .offset(y = floatingOffset.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Box(
+                    modifier = Modifier
+                        .background(
+                            Brush.horizontalGradient(
+                                colors = listOf(
+                                    nebulaPink.copy(alpha = 0.3f),
+                                    starGold.copy(alpha = 0.2f),
+                                    cosmicPurple.copy(alpha = 0.3f)
+                                )
+                            ),
+                            shape = RoundedCornerShape(50)
+                        )
+                        .padding(horizontal = 20.dp, vertical = 12.dp)
+                ) {
+                    Text(
+                        text = "$greeting, Explorer! 🌌",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            letterSpacing = 0.8.sp
+                        ),
+                        textAlign = TextAlign.Center
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Discover the infinite wonders of the cosmos",
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        color = Color.White.copy(alpha = 0.8f),
+                        fontWeight = FontWeight.Light,
+                        fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                    ),
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+    }
 }
 
 @Composable
@@ -365,7 +381,6 @@ private fun ImageBackedTopicCard(
 ) {
     val context = LocalContext.current
 
-    // Topic data with image URLs and fallback colors
     val topicData = remember(topic.name) {
         when (topic.name) {
             "Black Holes" -> Triple(
@@ -440,8 +455,7 @@ private fun ImageBackedTopicCard(
     var isLoading by remember { mutableStateOf(true) }
     var hasError by remember { mutableStateOf(false) }
 
-    // Shimmer animation
-    val infiniteTransition = rememberInfiniteTransition(label = "shimmer")
+    val infiniteTransition = rememberInfiniteTransition(label = "shimmer") // This is for card shimmer
     val shimmerAlpha by infiniteTransition.animateFloat(
         initialValue = 0.2f,
         targetValue = 0.8f,
@@ -471,9 +485,7 @@ private fun ImageBackedTopicCard(
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
-            // Background: Image or fallback color
             if (hasError) {
-                // Fallback cosmic background
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -482,129 +494,71 @@ private fun ImageBackedTopicCard(
                                 colors = listOf(
                                     fallbackColor.copy(alpha = 0.8f),
                                     fallbackColor.copy(alpha = 1f),
-                                    Color.Black.copy(alpha = 0.9f)
+                                    fallbackColor.copy(alpha = 0.7f).compositeOver(Color.Black)
                                 ),
-                                radius = 400f
+                                radius = 2000f
                             )
-                        )
+                        ),
+                    contentAlignment = Alignment.Center
                 ) {
-                    // Large emoji watermark
-                    Text(
-                        text = emoji,
-                        fontSize = 80.sp,
-                        color = Color.White.copy(alpha = 0.1f),
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .offset(x = 30.dp, y = (-20).dp)
-                    )
+                    Text(emoji, fontSize = 60.sp)
                 }
             } else {
-                // Image with loading shimmer
                 AsyncImage(
                     model = ImageRequest.Builder(context)
                         .data(imageUrl)
                         .crossfade(true)
                         .build(),
                     contentDescription = topic.name,
-                    modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop,
-                    onSuccess = { isLoading = false },
-                    onError = {
-                        isLoading = false
-                        hasError = true
-                    }
+                    modifier = Modifier.fillMaxSize(),
+                    onLoading = { isLoading = true; hasError = false }, // Reset hasError on new load
+                    onError = { hasError = true; isLoading = false } 
                 )
-
-                // Loading shimmer overlay
-                if (isLoading) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(
-                                Color.Gray.copy(alpha = shimmerAlpha)
-                                    .compositeOver(fallbackColor.copy(alpha = 0.3f))
-                            )
-                    )
-                }
             }
 
-            // Dark gradient overlay for text readability
-            Box(
+            if (isLoading && !hasError) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = shimmerAlpha))
+                )
+            }
+
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(
                         Brush.verticalGradient(
                             colors = listOf(
                                 Color.Transparent,
-                                Color.Black.copy(alpha = 0.3f),
-                                Color.Black.copy(alpha = 0.7f)
+                                Color.Black.copy(alpha = 0.1f),
+                                Color.Black.copy(alpha = 0.8f)
                             ),
-                            startY = 0f,
-                            endY = Float.POSITIVE_INFINITY
+                            startY = 300f
                         )
                     )
-            )
-
-            // Emoji accent (top-left)
-            Text(
-                text = emoji,
-                fontSize = 28.sp,
-                color = Color.White.copy(alpha = 0.9f),
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(16.dp)
-                    .background(
-                        Color.Black.copy(alpha = 0.2f),
-                        RoundedCornerShape(8.dp)
-                    )
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
-            )
-
-            // Text content (bottom-left)
-            Column(
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(20.dp)
-                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.Bottom
             ) {
                 Text(
                     text = topic.name,
                     style = MaterialTheme.typography.headlineSmall.copy(
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
-                        letterSpacing = 0.5.sp
-                    )
+                        letterSpacing = 0.8.sp
+                    ),
+                    modifier = Modifier.padding(bottom = 4.dp)
                 )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
                 Text(
-                    text = topic.description.ifBlank { "Explore the mysteries of ${topic.name.lowercase()}" },
+                    text = topic.description.take(80) + if (topic.description.length > 80) "..." else "", // Ensure description is used
                     style = MaterialTheme.typography.bodyMedium.copy(
-                        color = Color.White.copy(alpha = 0.9f),
-                        lineHeight = 18.sp
+                        color = Color.White.copy(alpha = 0.8f),
+                        letterSpacing = 0.5.sp
                     ),
                     maxLines = 2
                 )
             }
-
-            // Glassmorphism overlay for text background
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .fillMaxWidth()
-                    .height(90.dp)
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                Color.Transparent,
-                                Color.Black.copy(alpha = 0.1f),
-                                Color.Black.copy(alpha = 0.4f)
-                            )
-                        ),
-                        RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp)
-                    )
-            )
         }
     }
 }
