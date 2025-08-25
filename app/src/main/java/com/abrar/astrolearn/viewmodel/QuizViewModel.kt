@@ -3,6 +3,7 @@ package com.abrar.astrolearn.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.abrar.astrolearn.data.QuizRepository
+import com.abrar.astrolearn.data.QuizResultStore
 import com.abrar.astrolearn.model.QuizAnswer
 import com.abrar.astrolearn.model.QuizQuestion
 import com.abrar.astrolearn.model.QuizResult
@@ -33,6 +34,9 @@ class QuizViewModel : ViewModel() {
     fun startQuiz() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
+
+            // Clear any previous quiz results when starting a new quiz
+            QuizResultStore.clearQuizResult()
 
             val questions = quizRepository.getRandomQuiz(10)
 
@@ -89,6 +93,9 @@ class QuizViewModel : ViewModel() {
                 answers = updatedAnswers
             )
 
+            // Save quiz result to the store for access by QuizResultsScreen
+            QuizResultStore.saveQuizResult(quizResult)
+
             _uiState.value = currentState.copy(
                 userAnswers = updatedAnswers,
                 isQuizCompleted = true,
@@ -120,5 +127,16 @@ class QuizViewModel : ViewModel() {
 
     fun hideFeedback() {
         _uiState.value = _uiState.value.copy(showFeedback = false)
+    }
+
+    fun loadQuizResult() {
+        val savedResult = QuizResultStore.getLastQuizResult()
+        if (savedResult != null) {
+            _uiState.value = _uiState.value.copy(
+                quizResult = savedResult,
+                showResult = true,
+                isQuizCompleted = true
+            )
+        }
     }
 }
