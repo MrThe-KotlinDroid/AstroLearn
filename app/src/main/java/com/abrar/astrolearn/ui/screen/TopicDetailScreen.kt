@@ -1,5 +1,7 @@
 package com.abrar.astrolearn.ui.screen
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -38,7 +40,7 @@ fun TopicDetailScreen(
     topic: SpaceTopic,
     onBackClick: () -> Unit
 ) {
-    var isLoading by remember { mutableStateOf(true) }
+    var isLoading by remember { mutableStateOf(false) } // Changed from true to false
     var fullAiExplanation by remember { mutableStateOf("") }
     var displayedText by remember { mutableStateOf("") }
     var isStreaming by remember { mutableStateOf(false) }
@@ -47,6 +49,7 @@ fun TopicDetailScreen(
     var showAskDialog by remember { mutableStateOf(false) }
     var customQuestion by remember { mutableStateOf("") }
     var typingJob by remember { mutableStateOf<Job?>(null) }
+    var hasGeneratedExplanation by remember { mutableStateOf(false) }
 
     val openRouterService = remember { OpenRouterService() }
     val favoritesViewModel: FavoritesViewModel = viewModel()
@@ -54,7 +57,7 @@ fun TopicDetailScreen(
     val coroutineScope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
 
-    // Space-themed data mapping
+    // Space-themed data mapping with enhanced visuals
     val topicData = mapOf(
         "Black Holes" to Triple("🕳️", "https://images.unsplash.com/photo-1446776653964-20c1d3a81b06?w=800&h=600&fit=crop", Color(0xFF1A0033)),
         "Planets" to Triple("🪐", "https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?w=800&h=600&fit=crop", Color(0xFF2D1B69)),
@@ -123,11 +126,12 @@ fun TopicDetailScreen(
                 displayedText = trimmedText
                 isStreaming = false
                 showCursor = false
+                hasGeneratedExplanation = true
             }
         }
     }
 
-    // Function to fetch AI explanation
+    // Function to fetch AI explanation - now manual only
     fun fetchAiExplanation(question: String? = null) {
         isLoading = true
         errorMessage = null
@@ -139,6 +143,9 @@ fun TopicDetailScreen(
             if (response != null) {
                 fullAiExplanation = response
                 startTypingEffect(response)
+                coroutineScope.launch {
+                    snackbarHostState.showSnackbar("✨ AI explanation generated successfully!")
+                }
             } else {
                 errorMessage = error ?: "Unknown error occurred"
                 isStreaming = false
@@ -148,11 +155,6 @@ fun TopicDetailScreen(
                 }
             }
         }
-    }
-
-    // Load AI explanation when screen opens
-    LaunchedEffect(topic.name) {
-        fetchAiExplanation()
     }
 
     // Ask AI Dialog
@@ -314,198 +316,374 @@ fun TopicDetailScreen(
             }
         }
     ) { innerPadding ->
-        Column(
+        // Enhanced Space-themed Background
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
-                .verticalScroll(scrollState)
-        ) {
-            // Hero Banner Section
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(250.dp)
-            ) {
-                // Background Image
-                AsyncImage(
-                    model = imageUrl,
-                    contentDescription = topic.name,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-
-                // Gradient Overlay
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            brush = Brush.verticalGradient(
-                                colors = listOf(
-                                    Color.Black.copy(alpha = 0.3f),
-                                    Color.Black.copy(alpha = 0.7f)
-                                )
-                            )
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFF0B1426), // Deep space blue
+                            Color(0xFF1A1B3A), // Dark purple
+                            Color(0xFF2D1B69), // Rich purple
+                            Color.Black
                         )
+                    )
                 )
-
-                // Content Overlay
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(24.dp),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = emoji,
-                        fontSize = 64.sp,
-                        modifier = Modifier.padding(bottom = 16.dp)
-                    )
-                    Text(
-                        text = topic.name,
-                        fontSize = 32.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        textAlign = TextAlign.Center
-                    )
-                    Text(
-                        text = topic.description,
-                        fontSize = 18.sp,
-                        color = Color.White.copy(alpha = 0.9f),
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(top = 12.dp)
-                    )
-                }
-            }
-
-            // AI Explanation Section
+        ) {
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(primaryColor.copy(alpha = 0.1f), Color.Transparent)
-                        )
-                    )
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .verticalScroll(scrollState)
             ) {
-                // AI Explorer's Note Header
-                Card(
+                // Enhanced Hero Banner Section
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = primaryColor.copy(alpha = 0.15f)
-                    ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                        .wrapContentHeight() // Changed from fixed height to wrap content
+                        .defaultMinSize(minHeight = 200.dp) // Reduced from 300.dp to 200.dp for more compact layout
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    // Background Image with enhanced overlay
+                    AsyncImage(
+                        model = imageUrl,
+                        contentDescription = topic.name,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+
+                    // Enhanced Gradient Overlay
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                brush = Brush.verticalGradient(
+                                    colors = listOf(
+                                        primaryColor.copy(alpha = 0.3f),
+                                        Color.Black.copy(alpha = 0.8f)
+                                    )
+                                )
+                            )
+                    )
+
+                    // Enhanced Content Overlay
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp)
+                            .padding(horizontal = 24.dp, vertical = 24.dp), // Reduced vertical padding from 40.dp to 24.dp
+                        verticalArrangement = Arrangement.spacedBy(12.dp), // Reduced spacing from 16.dp to 12.dp
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "🤖",
-                            fontSize = 28.sp
+                            text = emoji,
+                            fontSize = 72.sp, // Slightly reduced from 80.sp to 72.sp
+                            modifier = Modifier.padding(bottom = 4.dp) // Reduced from 8.dp to 4.dp
                         )
                         Text(
-                            text = "AI Explorer's Note",
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
+                            text = topic.name,
+                            fontSize = 32.sp, // Slightly reduced from 36.sp to 32.sp
+                            fontWeight = FontWeight.ExtraBold,
+                            color = Color.White,
+                            textAlign = TextAlign.Center,
+                            letterSpacing = 1.sp
+                        )
+                        Text(
+                            text = topic.description,
+                            fontSize = 16.sp, // Reduced from 18.sp to 16.sp
+                            color = Color.White.copy(alpha = 0.95f),
+                            textAlign = TextAlign.Center,
+                            lineHeight = 22.sp, // Reduced from 24.sp to 22.sp
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 4.dp) // Reduced vertical padding from 8.dp to 4.dp
                         )
                     }
                 }
 
-                // AI Explanation Content
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
-                    ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                // Enhanced Content Section with Space Background
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    primaryColor.copy(alpha = 0.15f),
+                                    Color.Transparent,
+                                    Color(0xFF0B1426).copy(alpha = 0.3f)
+                                )
+                            )
+                        )
+                        .padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(20.dp)
                 ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(20.dp)
-                    ) {
-                        when {
-                            isLoading -> {
-                                Box(
+                    // Generate AI Explanation Button (Main Feature)
+                    if (!hasGeneratedExplanation && fullAiExplanation.isEmpty()) {
+                        AnimatedVisibility(
+                            visible = true,
+                            enter = slideInVertically(
+                                animationSpec = tween(600),
+                                initialOffsetY = { it / 2 }
+                            ) + fadeIn(animationSpec = tween(600))
+                        ) {
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 16.dp),
+                                shape = RoundedCornerShape(20.dp),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = primaryColor.copy(alpha = 0.2f)
+                                )
+                            ) {
+                                Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(vertical = 48.dp),
-                                    contentAlignment = Alignment.Center
+                                        .padding(24.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
-                                    Column(
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                                    Text(
+                                        text = "🚀 Ready to Explore?",
+                                        fontSize = 24.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White,
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier.padding(bottom = 16.dp)
+                                    )
+
+                                    Text(
+                                        text = "Generate an AI-powered explanation tailored for learners",
+                                        fontSize = 16.sp,
+                                        color = Color.White.copy(alpha = 0.9f),
+                                        textAlign = TextAlign.Center,
+                                        lineHeight = 22.sp,
+                                        modifier = Modifier.padding(bottom = 24.dp)
+                                    )
+
+                                    Button(
+                                        onClick = { fetchAiExplanation() },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(60.dp),
+                                        enabled = !isLoading && !isStreaming,
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = primaryColor,
+                                            contentColor = Color.White
+                                        ),
+                                        shape = RoundedCornerShape(16.dp),
+                                        elevation = ButtonDefaults.buttonElevation(
+                                            defaultElevation = 6.dp,
+                                            pressedElevation = 8.dp
+                                        )
                                     ) {
-                                        CircularProgressIndicator(
-                                            color = primaryColor,
-                                            strokeWidth = 3.dp
+                                        if (isLoading) {
+                                            CircularProgressIndicator(
+                                                modifier = Modifier.size(24.dp),
+                                                strokeWidth = 3.dp,
+                                                color = Color.White
+                                            )
+                                            Spacer(Modifier.width(12.dp))
+                                            Text(
+                                                "Generating...",
+                                                fontSize = 18.sp,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        } else {
+                                            Text(
+                                                text = "✨",
+                                                fontSize = 24.sp
+                                            )
+                                            Spacer(Modifier.width(12.dp))
+                                            Text(
+                                                "Generate AI Explanation",
+                                                fontSize = 18.sp,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Enhanced AI Explanation Area
+                    AnimatedVisibility(
+                        visible = hasGeneratedExplanation || isStreaming || fullAiExplanation.isNotEmpty(),
+                        enter = slideInVertically(
+                            animationSpec = tween(800),
+                            initialOffsetY = { it / 3 }
+                        ) + fadeIn(animationSpec = tween(800))
+                    ) {
+                        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                            // Enhanced AI Explorer's Note Header
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = primaryColor.copy(alpha = 0.25f)
+                                ),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(20.dp)
+                                ) {
+                                    Text(
+                                        text = "🤖",
+                                        fontSize = 32.sp
+                                    )
+                                    Column {
+                                        Text(
+                                            text = "AI Explorer's Note",
+                                            fontSize = 26.sp,
+                                            fontWeight = FontWeight.ExtraBold,
+                                            color = Color.White,
+                                            letterSpacing = 0.5.sp
                                         )
                                         Text(
-                                            text = "🤖 AI is thinking...",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            text = "Generated for ${topic.name}",
+                                            fontSize = 14.sp,
+                                            color = Color.White.copy(alpha = 0.8f)
                                         )
                                     }
                                 }
                             }
 
-                            errorMessage != null -> {
-                                Card(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    colors = CardDefaults.cardColors(
-                                        containerColor = MaterialTheme.colorScheme.errorContainer,
-                                        contentColor = MaterialTheme.colorScheme.onErrorContainer
-                                    ),
-                                    shape = RoundedCornerShape(12.dp)
+                            // Enhanced AI Explanation Content
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(20.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = Color(0xFF1A1B3A).copy(alpha = 0.95f) // Dark space theme instead of white
+                                ),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(24.dp)
                                 ) {
-                                    Text(
-                                        text = "❌ Error: $errorMessage",
-                                        fontSize = 14.sp,
-                                        modifier = Modifier.padding(16.dp)
-                                    )
+                                    when {
+                                        isLoading -> {
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(vertical = 60.dp),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Column(
+                                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                                    verticalArrangement = Arrangement.spacedBy(20.dp)
+                                                ) {
+                                                    CircularProgressIndicator(
+                                                        color = primaryColor,
+                                                        strokeWidth = 4.dp,
+                                                        modifier = Modifier.size(48.dp)
+                                                    )
+                                                    Text(
+                                                        text = "🌟 AI is crafting your explanation...",
+                                                        style = MaterialTheme.typography.bodyLarge,
+                                                        color = Color.White, // Changed to white for visibility on dark background
+                                                        fontWeight = FontWeight.Medium
+                                                    )
+                                                }
+                                            }
+                                        }
+
+                                        errorMessage != null -> {
+                                            Card(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                colors = CardDefaults.cardColors(
+                                                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                                                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                                                ),
+                                                shape = RoundedCornerShape(12.dp)
+                                            ) {
+                                                Column(
+                                                    modifier = Modifier.padding(20.dp)
+                                                ) {
+                                                    Text(
+                                                        text = "❌ Something went wrong",
+                                                        fontSize = 16.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                        modifier = Modifier.padding(bottom = 8.dp)
+                                                    )
+                                                    Text(
+                                                        text = errorMessage!!,
+                                                        fontSize = 14.sp
+                                                    )
+                                                    Spacer(modifier = Modifier.height(16.dp))
+                                                    Button(
+                                                        onClick = {
+                                                            errorMessage = null
+                                                            fetchAiExplanation()
+                                                        },
+                                                        colors = ButtonDefaults.buttonColors(
+                                                            containerColor = primaryColor
+                                                        )
+                                                    ) {
+                                                        Text("Try Again")
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        else -> {
+                                            // Enhanced text rendering
+                                            if (isStreaming) {
+                                                val textWithCursor = if (showCursor) "$displayedText▌" else displayedText
+                                                Text(
+                                                    text = textWithCursor,
+                                                    fontSize = 17.sp,
+                                                    lineHeight = 26.sp,
+                                                    textAlign = TextAlign.Justify,
+                                                    color = Color.White.copy(alpha = 0.95f), // Changed to white for dark background
+                                                    modifier = Modifier.fillMaxWidth()
+                                                )
+                                            } else if (fullAiExplanation.isNotEmpty()) {
+                                                Text(
+                                                    text = parseMarkdownText(fullAiExplanation),
+                                                    fontSize = 17.sp,
+                                                    lineHeight = 26.sp,
+                                                    textAlign = TextAlign.Justify,
+                                                    color = Color.White.copy(alpha = 0.95f), // Changed to white for dark background
+                                                    modifier = Modifier.fillMaxWidth()
+                                                )
+                                            }
+                                        }
+                                    }
                                 }
                             }
 
-                            else -> {
-                                // Render strategy: plain text while streaming, parsed markdown when complete
-                                if (isStreaming) {
-                                    // While streaming: show plain text with cursor
-                                    val textWithCursor = if (showCursor) "$displayedText▌" else displayedText
-                                    Text(
-                                        text = textWithCursor,
-                                        fontSize = 16.sp,
-                                        lineHeight = 24.sp,
-                                        textAlign = TextAlign.Justify,
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
-                                } else {
-                                    // After streaming: show full parsed markdown
-                                    Text(
-                                        text = parseMarkdownText(fullAiExplanation),
-                                        fontSize = 16.sp,
-                                        lineHeight = 24.sp,
-                                        textAlign = TextAlign.Justify,
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
+                            // Regenerate button after explanation is complete
+                            if (hasGeneratedExplanation && !isStreaming && !isLoading) {
+                                Button(
+                                    onClick = {
+                                        fullAiExplanation = ""
+                                        displayedText = ""
+                                        hasGeneratedExplanation = false
+                                        fetchAiExplanation()
+                                    },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(48.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = primaryColor.copy(alpha = 0.8f),
+                                        contentColor = Color.White
+                                    ),
+                                    shape = RoundedCornerShape(12.dp)
+                                ) {
+                                    Text("🔄 Generate New Explanation", fontWeight = FontWeight.Medium)
                                 }
                             }
                         }
                     }
-                }
 
-                // Bottom spacing for FABs
-                Spacer(modifier = Modifier.height(120.dp))
+                    // Bottom spacing for FABs
+                    Spacer(modifier = Modifier.height(120.dp))
+                }
             }
         }
     }
