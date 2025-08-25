@@ -55,6 +55,7 @@ fun HomeScreen(
     var isSearchFocused by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
 
+
     val filteredTopics = remember(topics, searchText) {
         if (searchText.isBlank()) {
             topics
