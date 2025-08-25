@@ -48,6 +48,7 @@ import java.util.Calendar
 fun HomeScreen(
     onTopicClick: (SpaceTopic) -> Unit,
     onFavoritesClick: () -> Unit = {},
+    onQuizClick: () -> Unit = {}, // Added quiz click handler
     viewModel: HomeViewModel = viewModel()
 ) {
     val topics by viewModel.topics.collectAsState()
@@ -165,6 +166,16 @@ fun HomeScreen(
                     start = 16.dp, end = 16.dp, top = 12.dp, bottom = 20.dp
                 )
             ) {
+                // Add Quiz Card at the top
+                item {
+                    QuizFeatureCard(
+                        onClick = onQuizClick,
+                        starGold = starGold,
+                        nebulaPink = nebulaPink,
+                        cosmicPurple = cosmicPurple
+                    )
+                }
+
                 items(filteredTopics) { topic ->
                     ImageBackedTopicCard(
                         topic = topic,
@@ -559,6 +570,88 @@ private fun ImageBackedTopicCard(
                     ),
                     maxLines = 2
                 )
+            }
+        }
+    }
+}
+
+@Composable
+fun QuizFeatureCard(
+    onClick: () -> Unit,
+    starGold: Color,
+    nebulaPink: Color,
+    cosmicPurple: Color
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(120.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .clickable { onClick() }
+            .shadow(
+                elevation = 8.dp,
+                shape = RoundedCornerShape(16.dp),
+                ambientColor = Color.Black.copy(alpha = 0.1f),
+                spotColor = Color.Black.copy(alpha = 0.1f)
+            ),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+        elevation = CardDefaults.cardElevation(0.dp)
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            // Background gradient
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                nebulaPink.copy(alpha = 0.7f),
+                                cosmicPurple.copy(alpha = 0.7f),
+                                starGold.copy(alpha = 0.5f),
+                                Color.Transparent
+                            ),
+                            startY = 0f,
+                            endY = 300f
+                        )
+                    )
+            )
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Cosmic Quiz Challenge",
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        letterSpacing = 0.8.sp
+                    ),
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                Text(
+                    text = "Test your knowledge about the universe and earn rewards!",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = Color.White.copy(alpha = 0.9f),
+                        letterSpacing = 0.5.sp
+                    ),
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+                Button(
+                    onClick = onClick,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = starGold,
+                        contentColor = Color.Black
+                    ),
+                    modifier = Modifier.align(Alignment.End)
+                ) {
+                    Text("Start Quiz")
+                }
             }
         }
     }
