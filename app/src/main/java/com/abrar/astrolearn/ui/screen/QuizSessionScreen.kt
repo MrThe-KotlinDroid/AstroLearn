@@ -36,12 +36,8 @@ fun QuizSessionScreen(
     val uiState by viewModel.uiState.collectAsState()
     val scrollState = rememberScrollState()
 
-    // Space-themed colors
-    val spaceBlue = Color(0xFF1E3A8A)
+    // Space-themed colors (only keeping what's actually used)
     val nebulaPurple = Color(0xFF8B5CF6)
-    val starYellow = Color(0xFFFCD34D)
-    val correctGreen = Color(0xFF10B981)
-    val incorrectRed = Color(0xFFEF4444)
 
     LaunchedEffect(uiState.isQuizCompleted) {
         if (uiState.isQuizCompleted) {
@@ -53,6 +49,25 @@ fun QuizSessionScreen(
     // Reset scroll position when moving to next question
     LaunchedEffect(uiState.currentQuestionIndex) {
         scrollState.animateScrollTo(0)
+    }
+
+    // Auto-scroll to feedback when answer is selected and feedback is shown
+    LaunchedEffect(uiState.showFeedback, uiState.selectedAnswerIndex) {
+        if (uiState.showFeedback && uiState.selectedAnswerIndex != null) {
+            // Add delay for smooth UX after answer selection
+            kotlinx.coroutines.delay(150)
+
+            // Calculate scroll position to show feedback area
+            // This ensures the feedback card is visible and doesn't overlap with the bottom button
+            val feedbackPosition = scrollState.maxValue * 0.75f // Scroll to about 75% down
+            scrollState.animateScrollTo(
+                value = feedbackPosition.toInt(),
+                animationSpec = tween(
+                    durationMillis = 600,
+                    easing = FastOutSlowInEasing
+                )
+            )
+        }
     }
 
     Box(
@@ -91,7 +106,6 @@ fun QuizSessionScreen(
                         QuizTopBar(
                             currentQuestionNumber = uiState.currentQuestionIndex + 1,
                             totalQuestions = uiState.questions.size,
-                            progress = viewModel.getProgress(),
                             onBackClick = onNavigateBack
                         )
 
@@ -99,7 +113,7 @@ fun QuizSessionScreen(
 
                         // Progress Bar
                         LinearProgressIndicator(
-                            progress = (uiState.currentQuestionIndex + 1).toFloat() / uiState.questions.size.toFloat(),
+                            progress = { (uiState.currentQuestionIndex + 1).toFloat() / uiState.questions.size.toFloat() },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(8.dp),
@@ -208,7 +222,6 @@ fun QuizSessionScreen(
 private fun QuizTopBar(
     currentQuestionNumber: Int,
     totalQuestions: Int,
-    progress: Float,
     onBackClick: () -> Unit
 ) {
     Row(

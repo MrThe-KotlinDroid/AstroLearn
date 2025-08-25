@@ -133,7 +133,7 @@ fun AstroLearnNavHost(
         }
 
         composable("quiz_session") {
-            val quizViewModel: QuizViewModel = viewModel()
+            val quizViewModel: QuizViewModel = viewModel(navController.getBackStackEntry("quiz_session"))
 
             // Start the quiz when entering this screen
             LaunchedEffect(Unit) {
@@ -144,7 +144,7 @@ fun AstroLearnNavHost(
                 viewModel = quizViewModel,
                 onQuizComplete = {
                     navController.navigate("quiz_results") {
-                        popUpTo("quiz_session") { inclusive = true }
+                        popUpTo("quiz_session") { inclusive = false } // Changed to preserve the quiz_session entry
                     }
                 },
                 onNavigateBack = {
@@ -154,7 +154,9 @@ fun AstroLearnNavHost(
         }
 
         composable("quiz_results") {
-            val quizViewModel: QuizViewModel = viewModel()
+            // Share the same ViewModel instance from quiz_session
+            val quizSessionEntry = navController.getBackStackEntry("quiz_session")
+            val quizViewModel: QuizViewModel = viewModel(quizSessionEntry)
 
             QuizResultsScreen(
                 viewModel = quizViewModel,
