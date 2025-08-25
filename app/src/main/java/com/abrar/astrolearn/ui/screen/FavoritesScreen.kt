@@ -39,6 +39,7 @@ import java.util.*
 fun FavoritesScreen(
     onBackClick: () -> Unit,
     onBrowseTopicsClick: () -> Unit = {},
+    onQuizMeClick: (String, String) -> Unit = { _, _ -> },
     favoritesViewModel: FavoritesViewModel = viewModel()
 ) {
     val favorites by favoritesViewModel.favorites.collectAsState(initial = emptyList())
@@ -201,6 +202,7 @@ fun FavoritesScreen(
                         EnhancedFavoriteTopicCard(
                             favorite = favorite,
                             onDelete = { favoritesViewModel.removeFromFavorites(it) },
+                            onQuizMeClick = onQuizMeClick,
                             modifier = Modifier.animateItem(
                                 fadeInSpec = tween(300),
                                 fadeOutSpec = tween(300),
@@ -338,7 +340,8 @@ fun EnhancedEmptyState(
 fun EnhancedFavoriteTopicCard(
     favorite: FavoriteTopic,
     onDelete: (FavoriteTopic) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onQuizMeClick: (String, String) -> Unit = { _, _ -> },
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
     var isExpanded by remember { mutableStateOf(false) }
@@ -387,7 +390,7 @@ fun EnhancedFavoriteTopicCard(
                 .fillMaxWidth()
                 .padding(20.dp)
         ) {
-            // Header with title and delete button
+            // Header with title and action buttons
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -417,14 +420,30 @@ fun EnhancedFavoriteTopicCard(
                     }
                 }
 
-                IconButton(
-                    onClick = { showDeleteDialog = true }
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = "Delete ${favorite.name} from favorites",
-                        tint = MaterialTheme.colorScheme.error
-                    )
+                Row {
+                    // Quiz Me on This button
+                    IconButton(
+                        onClick = {
+                            onQuizMeClick(favorite.name, favorite.explanation)
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = "Quiz me on ${favorite.name}",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+
+                    // Delete button
+                    IconButton(
+                        onClick = { showDeleteDialog = true }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Delete ${favorite.name} from favorites",
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                    }
                 }
             }
 
@@ -460,6 +479,33 @@ fun EnhancedFavoriteTopicCard(
                         lineHeight = 20.sp,
                         color = MaterialTheme.colorScheme.onSurface
                     )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Quiz Me on This button - enhanced version when expanded
+                    Button(
+                        onClick = {
+                            onQuizMeClick(favorite.name, favorite.explanation)
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Quiz Me on This",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
             }
 

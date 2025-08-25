@@ -116,6 +116,28 @@ fun AstroLearnNavHost(
             FavoritesScreen(
                 onBackClick = {
                     navController.popBackStack()
+                },
+                onQuizMeClick = { topicName, explanation ->
+                    // Sanitize and safely encode the parameters to handle special characters
+                    val sanitizedTopicName = topicName.replace("\n", " ").replace("\r", " ").trim()
+                    val sanitizedExplanation = explanation.replace("\n", " ").replace("\r", " ").trim()
+
+                    try {
+                        val encodedTopicName = java.net.URLEncoder.encode(sanitizedTopicName, "UTF-8")
+                        val encodedExplanation = java.net.URLEncoder.encode(sanitizedExplanation, "UTF-8")
+                        navController.navigate("custom_quiz_session/$encodedTopicName/$encodedExplanation")
+                    } catch (e: Exception) {
+                        // Fallback: use base64 encoding if URL encoding fails
+                        val base64TopicName = android.util.Base64.encodeToString(
+                            sanitizedTopicName.toByteArray(Charsets.UTF_8),
+                            android.util.Base64.URL_SAFE or android.util.Base64.NO_WRAP
+                        )
+                        val base64Explanation = android.util.Base64.encodeToString(
+                            sanitizedExplanation.toByteArray(Charsets.UTF_8),
+                            android.util.Base64.URL_SAFE or android.util.Base64.NO_WRAP
+                        )
+                        navController.navigate("custom_quiz_session_base64/$base64TopicName/$base64Explanation")
+                    }
                 }
             )
         }
@@ -151,6 +173,84 @@ fun AstroLearnNavHost(
                 },
                 onNavigateBack = {
                     navController.popBackStack("home", inclusive = false)
+                }
+            )
+        }
+
+        // Custom quiz route for favorite topics
+        composable("custom_quiz_session/{topicName}/{explanation}") { backStackEntry ->
+            val encodedTopicName = backStackEntry.arguments?.getString("topicName") ?: ""
+            val encodedExplanation = backStackEntry.arguments?.getString("explanation") ?: ""
+
+            // Safely decode the URL-encoded parameters with error handling
+            val topicName = try {
+                java.net.URLDecoder.decode(encodedTopicName, "UTF-8")
+            } catch (e: IllegalArgumentException) {
+                // Fallback to encoded string if decoding fails
+                encodedTopicName.replace("%", "").replace("+", " ")
+            }
+
+            val explanation = try {
+                java.net.URLDecoder.decode(encodedExplanation, "UTF-8")
+            } catch (e: IllegalArgumentException) {
+                // Fallback to encoded string if decoding fails
+                encodedExplanation.replace("%", "").replace("+", " ")
+            }
+
+            val quizViewModel: QuizViewModel = viewModel()
+
+            // Start the custom quiz when entering this screen
+            LaunchedEffect(Unit) {
+                quizViewModel.startCustomQuiz(topicName, explanation, 4)
+            }
+
+            QuizSessionScreen(
+                viewModel = quizViewModel,
+                onQuizComplete = {
+                    navController.navigate("quiz_results") {
+                        popUpTo("custom_quiz_session/{topicName}/{explanation}") { inclusive = false }
+                    }
+                },
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        // Fallback custom quiz route using base64 encoding
+        composable("custom_quiz_session_base64/{topicName}/{explanation}") { backStackEntry ->
+            val base64TopicName = backStackEntry.arguments?.getString("topicName") ?: ""
+            val base64Explanation = backStackEntry.arguments?.getString("explanation") ?: ""
+
+            // Safely decode the base64-encoded parameters
+            val topicName = try {
+                String(android.util.Base64.decode(base64TopicName, android.util.Base64.URL_SAFE), Charsets.UTF_8)
+            } catch (e: Exception) {
+                "Custom Quiz" // Fallback topic name
+            }
+
+            val explanation = try {
+                String(android.util.Base64.decode(base64Explanation, android.util.Base64.URL_SAFE), Charsets.UTF_8)
+            } catch (e: Exception) {
+                "Quiz based on your favorite topic." // Fallback explanation
+            }
+
+            val quizViewModel: QuizViewModel = viewModel()
+
+            // Start the custom quiz when entering this screen
+            LaunchedEffect(Unit) {
+                quizViewModel.startCustomQuiz(topicName, explanation, 4)
+            }
+
+            QuizSessionScreen(
+                viewModel = quizViewModel,
+                onQuizComplete = {
+                    navController.navigate("quiz_results") {
+                        popUpTo("custom_quiz_session_base64/{topicName}/{explanation}") { inclusive = false }
+                    }
+                },
+                onNavigateBack = {
+                    navController.popBackStack()
                 }
             )
         }

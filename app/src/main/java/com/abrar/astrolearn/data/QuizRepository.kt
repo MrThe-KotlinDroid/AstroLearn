@@ -4,6 +4,8 @@ import com.abrar.astrolearn.model.QuizQuestion
 
 class QuizRepository {
 
+    private val favoriteQuizGenerator = FavoriteQuizGenerator()
+
     fun getAstronomyQuiz(): List<QuizQuestion> {
         return listOf(
             QuizQuestion(
@@ -146,5 +148,12 @@ class QuizRepository {
 
     fun getRandomQuiz(questionCount: Int = 10): List<QuizQuestion> {
         return getAstronomyQuiz().shuffled().take(questionCount)
+    }
+
+    /**
+     * Generate a custom quiz based on a favorite topic's explanation
+     */
+    fun generateCustomQuiz(topicName: String, explanation: String, questionCount: Int = 4): List<QuizQuestion> {
+        return favoriteQuizGenerator.generateQuizFromExplanation(topicName, explanation, questionCount)
     }
 }

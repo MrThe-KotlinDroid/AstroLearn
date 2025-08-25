@@ -54,6 +54,32 @@ class QuizViewModel : ViewModel() {
         }
     }
 
+    /**
+     * Start a custom quiz based on a favorite topic's explanation
+     */
+    fun startCustomQuiz(topicName: String, explanation: String, questionCount: Int = 4) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true)
+
+            // Clear any previous quiz results when starting a new quiz
+            QuizResultStore.clearQuizResult()
+
+            val questions = quizRepository.generateCustomQuiz(topicName, explanation, questionCount)
+
+            _uiState.value = _uiState.value.copy(
+                isLoading = false,
+                questions = questions,
+                currentQuestionIndex = 0,
+                selectedAnswerIndex = null,
+                userAnswers = emptyList(),
+                showResult = false,
+                quizResult = null,
+                showFeedback = false,
+                isQuizCompleted = false
+            )
+        }
+    }
+
     fun selectAnswer(answerIndex: Int) {
         _uiState.value = _uiState.value.copy(
             selectedAnswerIndex = answerIndex,
