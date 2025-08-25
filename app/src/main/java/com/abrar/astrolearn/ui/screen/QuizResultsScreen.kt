@@ -59,52 +59,52 @@ fun QuizResultsScreen(
             }
 
             if (quizResult != null) {
-                // Celebration Header
+                // Celebration Header - immediate display, faster animation
                 item {
                     AnimatedVisibility(
                         visible = true,
                         enter = slideInVertically(
-                            animationSpec = tween(800),
-                            initialOffsetY = { -it }
-                        ) + fadeIn(animationSpec = tween(800))
+                            animationSpec = tween(300),
+                            initialOffsetY = { -it / 2 }
+                        ) + fadeIn(animationSpec = tween(300))
                     ) {
                         ResultHeaderCard(quizResult = quizResult)
                     }
                 }
 
-                // Score Breakdown
+                // Score Breakdown - reduced delay and faster animation
                 item {
                     AnimatedVisibility(
                         visible = true,
                         enter = slideInVertically(
-                            animationSpec = tween(800, delayMillis = 200),
-                            initialOffsetY = { it }
-                        ) + fadeIn(animationSpec = tween(800, delayMillis = 200))
+                            animationSpec = tween(300, delayMillis = 50),
+                            initialOffsetY = { it / 2 }
+                        ) + fadeIn(animationSpec = tween(300, delayMillis = 50))
                     ) {
                         ScoreBreakdownCard(quizResult = quizResult)
                     }
                 }
 
-                // Performance Badge
+                // Performance Badge - minimal delay, faster animation
                 item {
                     AnimatedVisibility(
                         visible = true,
                         enter = scaleIn(
-                            animationSpec = tween(600, delayMillis = 400)
-                        ) + fadeIn(animationSpec = tween(600, delayMillis = 400))
+                            animationSpec = tween(250, delayMillis = 100)
+                        ) + fadeIn(animationSpec = tween(250, delayMillis = 100))
                     ) {
                         PerformanceBadgeCard(percentage = quizResult.percentage)
                     }
                 }
 
-                // Action Buttons
+                // Action Buttons - minimal delay, fastest animation
                 item {
                     AnimatedVisibility(
                         visible = true,
                         enter = slideInVertically(
-                            animationSpec = tween(600, delayMillis = 600),
-                            initialOffsetY = { it }
-                        ) + fadeIn(animationSpec = tween(600, delayMillis = 600))
+                            animationSpec = tween(200, delayMillis = 150),
+                            initialOffsetY = { it / 3 }
+                        ) + fadeIn(animationSpec = tween(200, delayMillis = 150))
                     ) {
                         ActionButtonsCard(
                             onRetakeQuiz = onRetakeQuiz,

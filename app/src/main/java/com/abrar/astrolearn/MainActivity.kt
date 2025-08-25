@@ -14,12 +14,14 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.abrar.astrolearn.data.QuizResultStore
 import com.abrar.astrolearn.model.SpaceTopic
 import com.abrar.astrolearn.ui.screen.FavoritesScreen
 import com.abrar.astrolearn.ui.screen.HomeScreen
@@ -158,9 +160,15 @@ fun AstroLearnNavHost(
             // The quiz data will be loaded from QuizResultStore
             val quizViewModel: QuizViewModel = viewModel()
 
-            // Load quiz results from the store when entering this screen
-            LaunchedEffect(Unit) {
-                quizViewModel.loadQuizResult()
+            // Preload quiz results immediately when composable is created (not in LaunchedEffect)
+            // This ensures data is available during first composition
+            val preloadedResult = remember { QuizResultStore.getLastQuizResult() }
+
+            // Set the result immediately if available
+            LaunchedEffect(preloadedResult) {
+                if (preloadedResult != null) {
+                    quizViewModel.loadQuizResult()
+                }
             }
 
             QuizResultsScreen(

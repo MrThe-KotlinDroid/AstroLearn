@@ -41,7 +41,7 @@ fun QuizSessionScreen(
 
     LaunchedEffect(uiState.isQuizCompleted) {
         if (uiState.isQuizCompleted) {
-            kotlinx.coroutines.delay(2000) // Show final feedback for 2 seconds
+            // Immediate navigation for better performance - no artificial delay
             onQuizComplete()
         }
     }
