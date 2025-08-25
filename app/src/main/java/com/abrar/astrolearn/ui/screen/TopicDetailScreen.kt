@@ -11,12 +11,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import com.abrar.astrolearn.model.SpaceTopic
 import com.abrar.astrolearn.service.OpenRouterService
 import com.abrar.astrolearn.viewmodel.FavoritesViewModel
@@ -29,22 +31,69 @@ fun TopicDetailScreen(
     onBackClick: () -> Unit
 ) {
     var isLoading by remember { mutableStateOf(true) }
-    var aiExplanation by remember { mutableStateOf("") }
+    var fullAiExplanation by remember { mutableStateOf("") }
+    var displayedText by remember { mutableStateOf("") }
+    var isStreaming by remember { mutableStateOf(false) }
+    var showCursor by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     val openRouterService = remember { OpenRouterService() }
     val favoritesViewModel: FavoritesViewModel = viewModel()
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
+    val scrollState = rememberScrollState()
+
+    // Cursor blinking effect
+    LaunchedEffect(isStreaming) {
+        while (isStreaming) {
+            showCursor = true
+            delay(500)
+            showCursor = false
+            delay(500)
+        }
+        showCursor = false
+    }
+
+    // Typing effect coroutine
+    suspend fun startTypingEffect(fullText: String) {
+        isStreaming = true
+        displayedText = ""
+
+        // Split text into words for smoother effect
+        val words = fullText.split(" ")
+        val delayPerWord = 100L // Adjust speed as needed
+
+        for (i in words.indices) {
+            val currentText = words.take(i + 1).joinToString(" ")
+            displayedText = currentText
+
+            // Auto-scroll to bottom as text grows
+            if (scrollState.maxValue > 0) {
+                scrollState.animateScrollTo(scrollState.maxValue)
+            }
+
+            delay(delayPerWord)
+        }
+
+        isStreaming = false
+        displayedText = fullAiExplanation
+    }
 
     // Load AI explanation when screen opens
     LaunchedEffect(topic.name) {
         isLoading = true
         errorMessage = null
+        displayedText = ""
+        fullAiExplanation = ""
+
         openRouterService.explainTopicForChild(topic.name) { response, error ->
             isLoading = false
             if (response != null) {
-                aiExplanation = response
+                fullAiExplanation = response
+                // Start typing effect in a coroutine
+                coroutineScope.launch {
+                    startTypingEffect(response)
+                }
             } else {
                 errorMessage = error ?: "Unknown error occurred"
             }
@@ -100,7 +149,7 @@ fun TopicDetailScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scrollState)
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
@@ -203,22 +252,33 @@ fun TopicDetailScreen(
                         }
 
                         else -> {
+                            // Display text with typing effect and cursor
+                            val textToDisplay = if (isStreaming && showCursor) {
+                                buildAnnotatedString {
+                                    append(parseMarkdownText(displayedText))
+                                    append("▌")
+                                }
+                            } else {
+                                parseMarkdownText(displayedText)
+                            }
+
                             Text(
-                                text = parseMarkdownText(aiExplanation),
+                                text = textToDisplay,
                                 fontSize = 16.sp,
                                 lineHeight = 24.sp,
                                 textAlign = TextAlign.Justify,
                                 modifier = Modifier.fillMaxWidth()
                             )
 
-                            Spacer(modifier = Modifier.height(16.dp))
+                            // Show save button only when streaming is complete
+                            if (!isStreaming && fullAiExplanation.isNotEmpty()) {
+                                Spacer(modifier = Modifier.height(16.dp))
 
-                            // Save to Favorites button
-                            Button(
-                                onClick = {
-                                    if (aiExplanation.isNotEmpty()) {
+                                // Save to Favorites button
+                                Button(
+                                    onClick = {
                                         coroutineScope.launch {
-                                            val wasAdded = favoritesViewModel.addToFavorites(topic.name, aiExplanation)
+                                            val wasAdded = favoritesViewModel.addToFavorites(topic.name, fullAiExplanation)
                                             val message = if (wasAdded) {
                                                 "Saved to Favorites ✅"
                                             } else {
@@ -226,17 +286,16 @@ fun TopicDetailScreen(
                                             }
                                             snackbarHostState.showSnackbar(message)
                                         }
-                                    }
-                                },
-                                modifier = Modifier.fillMaxWidth(),
-                                enabled = aiExplanation.isNotEmpty()
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Favorite,
-                                    contentDescription = null,
-                                    modifier = Modifier.padding(end = 8.dp)
-                                )
-                                Text("Save to Favorites")
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Favorite,
+                                        contentDescription = null,
+                                        modifier = Modifier.padding(end = 8.dp)
+                                    )
+                                    Text("Save to Favorites")
+                                }
                             }
                         }
                     }
