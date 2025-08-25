@@ -13,7 +13,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -22,7 +24,11 @@ import com.abrar.astrolearn.model.SpaceTopic
 import com.abrar.astrolearn.ui.screen.FavoritesScreen
 import com.abrar.astrolearn.ui.screen.HomeScreen
 import com.abrar.astrolearn.ui.screen.TopicDetailScreen
+import com.abrar.astrolearn.ui.screen.QuizStartScreen
+import com.abrar.astrolearn.ui.screen.QuizSessionScreen
+import com.abrar.astrolearn.ui.screen.QuizResultsScreen
 import com.abrar.astrolearn.ui.theme.AstroLearnTheme
+import com.abrar.astrolearn.viewmodel.QuizViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -78,6 +84,9 @@ fun AstroLearnNavHost(
                 },
                 onFavoritesClick = {
                     navController.navigate("favorites")
+                },
+                onQuizClick = {
+                    navController.navigate("quiz_start")
                 }
             )
         }
@@ -105,6 +114,59 @@ fun AstroLearnNavHost(
             FavoritesScreen(
                 onBackClick = {
                     navController.popBackStack()
+                }
+            )
+        }
+
+        // Quiz Navigation Routes
+        composable("quiz_start") {
+            QuizStartScreen(
+                onStartQuiz = {
+                    navController.navigate("quiz_session") {
+                        popUpTo("quiz_start") { inclusive = true }
+                    }
+                },
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable("quiz_session") {
+            val quizViewModel: QuizViewModel = viewModel()
+
+            // Start the quiz when entering this screen
+            LaunchedEffect(Unit) {
+                quizViewModel.startQuiz()
+            }
+
+            QuizSessionScreen(
+                viewModel = quizViewModel,
+                onQuizComplete = {
+                    navController.navigate("quiz_results") {
+                        popUpTo("quiz_session") { inclusive = true }
+                    }
+                },
+                onNavigateBack = {
+                    navController.popBackStack("home", inclusive = false)
+                }
+            )
+        }
+
+        composable("quiz_results") {
+            val quizViewModel: QuizViewModel = viewModel()
+
+            QuizResultsScreen(
+                viewModel = quizViewModel,
+                onRetakeQuiz = {
+                    navController.navigate("quiz_session") {
+                        popUpTo("quiz_results") { inclusive = true }
+                    }
+                },
+                onNavigateHome = {
+                    navController.navigate("home") {
+                        popUpTo("home") { inclusive = true }
+                    }
                 }
             )
         }
