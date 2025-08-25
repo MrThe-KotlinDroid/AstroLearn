@@ -391,21 +391,34 @@ fun TopicDetailScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 // AI Explorer's Note Header
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.padding(vertical = 8.dp)
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = primaryColor.copy(alpha = 0.15f)
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
-                    Text(
-                        text = "🤖",
-                        fontSize = 24.sp
-                    )
-                    Text(
-                        text = "AI Explorer's Note",
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = primaryColor
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    ) {
+                        Text(
+                            text = "🤖",
+                            fontSize = 28.sp
+                        )
+                        Text(
+                            text = "AI Explorer's Note",
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
                 }
 
                 // AI Explanation Content

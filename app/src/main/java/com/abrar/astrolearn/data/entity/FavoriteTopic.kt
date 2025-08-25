@@ -8,5 +8,6 @@ data class FavoriteTopic(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
     val name: String,
-    val explanation: String
+    val explanation: String,
+    val dateAdded: Long = System.currentTimeMillis()
 )
