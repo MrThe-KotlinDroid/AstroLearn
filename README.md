@@ -29,20 +29,36 @@ AstroLearn is an AI-powered Android app designed to help students explore space 
 ### Prerequisites
 - Android Studio
 - Android SDK
+- OpenRouter API key (sign up at https://openrouter.ai/)
 
 ### Setup Instructions
 1. **Clone the repository:**
    ```sh
    git clone https://github.com/MrThe-KotlinDroid/AstroLearn.git
    ```
-2. **Add your OpenRouter API key:**
-   - Create or edit the `local.properties` file in the project root.
-   - Add the following line:
-     ```
+
+2. **Configure API Key (REQUIRED):**
+   - Create or edit the `local.properties` file in the project root
+   - Add your OpenRouter API key:
+     ```properties
      OPENROUTER_API_KEY=your_api_key_here
      ```
-   - **Note:** Do NOT commit `local.properties` to version control. It contains sensitive information.
-3. **Open the project in Android Studio and build/run.**
+   - **⚠️ SECURITY NOTE:** 
+     - Never commit `local.properties` to Git (it's already in `.gitignore`)
+     - Never hardcode API keys in source code
+     - The app uses `BuildConfig.OPENROUTER_API_KEY` to access the key securely
+
+3. **Build Configuration:**
+   - The app automatically reads the API key from `local.properties`
+   - It's injected as a `BuildConfig` field at compile time
+   - Usage in code: `private val apiKey = BuildConfig.OPENROUTER_API_KEY`
+
+4. **Open the project in Android Studio and build/run.**
+
+### 🔑 API Key Management
+- **For Developers:** Add `OPENROUTER_API_KEY=your_key_here` to `local.properties`
+- **For Contributors:** Get your own API key from OpenRouter - don't share keys
+- **For Production:** Use secure environment variables or secret management
 
 ---
 

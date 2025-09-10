@@ -1,0 +1,83 @@
+# AstroLearn Image Placeholders Log
+
+This file contains all image placeholders that need to be replaced with actual screenshots and diagrams.
+
+## Required Images
+
+### 1. App Branding
+**Filename:** app_icon_splash.png
+**Placeholder:** ![PLACEHOLDER: app icon and splash screen](report/images/app_icon_splash.png)
+**Description:** AstroLearn app icon and splash screen showing the space exploration theme
+**Instructions:** Capture the app icon (from Android Studio or device) and the splash screen when the app starts
+**Size:** 512x512 for icon, 1080x1920 for splash screen
+
+### 2. Architecture Diagram
+**Filename:** architecture_diagram.png
+**Placeholder:** ![PLACEHOLDER: architecture diagram showing MVVM pattern](report/images/architecture_diagram.png)
+**Description:** MVVM Architecture diagram showing the relationship between UI, ViewModel, Model, and Data layers
+**Instructions:** Create a professional diagram showing the app's architecture components and their relationships
+**Size:** 1200x800 or similar landscape format
+
+### 3. Home Screen
+**Filename:** home_screen.png
+**Placeholder:** ![PLACEHOLDER: home screen with topic categories](report/images/home_screen.png)
+**Description:** Main home screen displaying space science topic categories and navigation options
+**Instructions:** Screenshot of the main home screen showing all topic categories and navigation elements
+**Size:** 1080x1920 (portrait phone screenshot)
+
+### 4. Topic Detail Screen
+**Filename:** topic_detail_screen.png
+**Placeholder:** ![PLACEHOLDER: topic detail screen with AI explanation](report/images/topic_detail_screen.png)
+**Description:** Topic detail screen showing AI-generated explanation for a selected space science topic
+**Instructions:** Screenshot showing a topic detail page with AI-generated content visible
+**Size:** 1080x1920 (portrait phone screenshot)
+
+### 5. Quiz Session
+**Filename:** quiz_session_screen.png
+**Placeholder:** ![PLACEHOLDER: quiz session screen](report/images/quiz_session_screen.png)
+**Description:** Interactive quiz session showing multiple-choice questions with progress indicator
+**Instructions:** Screenshot during an active quiz showing question, options, and progress
+**Size:** 1080x1920 (portrait phone screenshot)
+
+### 6. Quiz Results
+**Filename:** quiz_results_screen.png
+**Placeholder:** ![PLACEHOLDER: quiz results screen with score](report/images/quiz_results_screen.png)
+**Description:** Quiz results screen displaying final score and performance breakdown
+**Instructions:** Screenshot of quiz completion screen showing score and results
+**Size:** 1080x1920 (portrait phone screenshot)
+
+### 7. Favorites Screen
+**Filename:** favorites_screen.png
+**Placeholder:** ![PLACEHOLDER: favorites screen with saved content](report/images/favorites_screen.png)
+**Description:** Favorites screen showing bookmarked topics and saved AI explanations
+**Instructions:** Screenshot of favorites/bookmarks screen with some saved content visible
+**Size:** 1080x1920 (portrait phone screenshot)
+
+### 8. Navigation Flow
+**Filename:** navigation_flow.png
+**Placeholder:** ![PLACEHOLDER: navigation flow diagram](report/images/navigation_flow.png)
+**Description:** Complete navigation flow showing connections between all app screens
+**Instructions:** Create a flowchart diagram showing how users navigate between screens
+**Size:** 1200x800 or similar landscape format
+
+## Image Capture Guidelines
+
+### For Screenshots:
+- Use Android emulator or physical device
+- Ensure consistent theme (light/dark) across all screenshots
+- Capture in portrait orientation for phone screenshots
+- Include realistic data in screens (not empty states)
+- Ensure good contrast and readability
+
+### For Diagrams:
+- Use professional diagramming tools (Draw.io, Lucidchart, etc.)
+- Maintain consistent styling and colors
+- Include clear labels and annotations
+- Use standard architectural symbols where applicable
+- Export as PNG with high resolution
+
+## Notes:
+- All images should be placed in the report/images/ directory
+- Maintain the exact filenames as listed above
+- PNG format is preferred for better quality
+- Ensure images are clear and professional for the final report
